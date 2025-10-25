@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Markdown Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .editor-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #30363d;
+        }
+
+        .toolbar {
+            padding: 8px 16px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .import-btn {
+            padding: 6px 12px;
+            background: #238636;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .import-btn:hover {
+            background: #2ea043;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .file-name {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .preview-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+
+        .header {
+            padding: 16px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            font-weight: 600;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 16px;
+            background: #0d1117;
+            color: #c9d1d9;
+            border: none;
+            resize: none;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            outline: none;
+        }
+
+        .preview-content {
+            padding: 32px;
+            max-width: 900px;
+        }
+
+        /* GitHub Markdown Styles */
+        .markdown-body {
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+
+        .markdown-body h1, .markdown-body h2 {
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid #21262d;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .markdown-body h1 {
+            font-size: 2em;
+        }
+
+        .markdown-body h2 {
+            font-size: 1.5em;
+        }
+
+        .markdown-body h3 {
+            font-size: 1.25em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .markdown-body p {
+            margin-bottom: 16px;
+        }
+
+        .markdown-body code {
+            background: #161b22;
+            padding: 0.2em 0.4em;
+            border-radius: 6px;
+            font-size: 85%;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .markdown-body pre {
+            background: #161b22;
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+            margin-bottom: 16px;
+        }
+
+        .markdown-body pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-body blockquote {
+            padding: 0 1em;
+            color: #8b949e;
+            border-left: 0.25em solid #30363d;
+            margin-bottom: 16px;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            padding-left: 2em;
+            margin-bottom: 16px;
+        }
+
+        .markdown-body li {
+            margin-top: 0.25em;
+        }
+
+        .markdown-body a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .markdown-body a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-body hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #21262d;
+            border: 0;
+        }
+
+        .markdown-body table {
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .markdown-body table th, .markdown-body table td {
+            padding: 6px 13px;
+            border: 1px solid #30363d;
+        }
+
+        .markdown-body table th {
+            font-weight: 600;
+            background: #161b22;
+        }
+
+        .markdown-body table tr {
+            background: #0d1117;
+        }
+
+        .markdown-body table tr:nth-child(2n) {
+            background: #161b22;
+        }
+
+        .markdown-body img {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .markdown-body strong {
+            font-weight: 600;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 6px;
+            border: 2px solid #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: #0d1117;
+        }
+
+        /* Firefox scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #30363d #0d1117;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="editor-pane">
+            <div class="header">Markdown</div>
+            <div class="toolbar">
+                <input type="file" id="file-input" accept=".md,.markdown,.txt">
+                <button class="import-btn" onclick="document.getElementById('file-input').click()">Import .md File</button>
+                <span class="file-name" id="file-name"></span>
+            </div>
+            <textarea id="markdown-input" placeholder="Type your markdown here..."># Welcome to GitHub Markdown Viewer
+
+## Features
+
+This viewer supports all standard Markdown syntax:
+
+### Code Blocks
+
+```javascript
+function hello() {
+    console.log("Hello, World!");
+}
+```
+
+### Inline Code
+
+Use `inline code` with backticks.
+
+### Lists
+
+- Item 1
+- Item 2
+  - Nested item
+  - Another nested item
+
+### Blockquotes
+
+> This is a blockquote
+> It can span multiple lines
+
+### Links and Images
+
+[GitHub](https://github.com)
+
+### Tables
+
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
+| Cell 3   | Cell 4   |
+
+### Text Formatting
+
+**Bold text** and *italic text* and ***bold italic***
+
+---
+
+Try editing this markdown!</textarea>
+        </div>
+        <div class="preview-pane">
+            <div class="header">Preview</div>
+            <div class="preview-content">
+                <div id="preview" class="markdown-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('markdown-input');
+        const preview = document.getElementById('preview');
+        const fileInput = document.getElementById('file-input');
+        const fileNameDisplay = document.getElementById('file-name');
+
+        // Configure marked to use highlight.js with the new API
+        const renderer = new marked.Renderer();
+        renderer.code = function(code, language) {
+            const validLanguage = language && hljs.getLanguage(language) ? language : 'plaintext';
+            const highlightedCode = hljs.highlight(code, { language: validLanguage }).value;
+            return `<pre><code class="hljs language-${validLanguage}">${highlightedCode}</code></pre>`;
+        };
+
+        // Enable heading IDs for anchor links
+        renderer.heading = function(text, level) {
+            const escapedText = text.toLowerCase().replace(/[^\w]+/g, '-');
+            return `<h${level} id="${escapedText}">${text}</h${level}>`;
+        };
+
+        marked.use({ renderer, gfm: true });
+
+        function updatePreview() {
+            const markdown = input.value;
+            preview.innerHTML = marked.parse(markdown);
+            
+            // Enable smooth scrolling for anchor links
+            const links = preview.querySelectorAll('a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        }
+
+        // Handle file import
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    input.value = event.target.result;
+                    fileNameDisplay.textContent = file.name;
+                    updatePreview();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        input.addEventListener('input', updatePreview);
+        updatePreview();
+    </script>
+</body>
+</html>
